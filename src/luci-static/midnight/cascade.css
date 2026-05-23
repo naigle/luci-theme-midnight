@@ -1,465 +1,94 @@
 /* =============================================================
    LuCI Theme — Midnight
-   A dark theme for OpenWrt's LuCI web interface
-   Palette mirrors the Wi-Fi Health Dashboard
+   Permanent dark theme for OpenWrt's LuCI web interface.
+   Overrides the LuCI CSS custom property system only —
+   no Lua templates required or used.
    ============================================================= */
 
+/* ── Force permanent dark mode ───────────────────────────────── */
+/*
+   LuCI builds all colours from a small set of HSL root variables.
+   Overriding them here themes the entire interface without
+   touching a single component selector.
+*/
 :root {
-  --bg:      #0d1117;
-  --surface: #161b22;
-  --surface2:#21262d;
-  --border:  #30363d;
-  --text:    #e6edf3;
-  --muted:   #8b949e;
-  --green:   #3fb950;
-  --yellow:  #d29922;
-  --red:     #f85149;
-  --blue:    #58a6ff;
-  --orange:  #db6d28;
-  --purple:  #bc8cff;
+  /* Background: deep navy-charcoal */
+  --background-color-delta-l-sign: 1;   /* sign=1 → elevated surfaces get lighter */
+  --background-color-h: 216;
+  --background-color-s: 14%;
+  --background-color-l: 7%;             /* hsl(216,14%,7%) ≈ #0d1117 */
+
+  /* Text: off-white, dims via delta as it steps to medium/low */
+  --text-color-delta-l-sign: -1;
+  --text-color-h:   0;
+  --text-color-s:   0%;
+  --text-color-l:   100%;
+
+  /* Borders: same hue as background, elevated (+20 / +13 / +6 %) */
+  --border-color-delta-l-sign: 1;
+
+  /* Primary accent: GitHub blue */
+  --primary-color-high:   #58a6ff;
+  --primary-color-medium: #388bfd;
+  --primary-color-low:    #1f6feb;
+  --on-primary-color:     #0d1117;
+
+  /* Success: green */
+  --success-color-high-rgb: 63,185,80;
+  --success-color-high:   #3fb950;
+  --success-color-medium: #2ea043;
+  --success-color-low:    #238636;
+  --on-success-color:     #0d1117;
+
+  /* Error: red */
+  --error-color-high-rgb: 248,81,73;
+  --error-color-high:   #f85149;
+  --error-color-medium: #da3633;
+  --error-color-low:    #b62324;
+  --on-error-color:     #fff;
+
+  /* Warning: amber */
+  --warn-color-high:   #d29922;
+  --warn-color-medium: #bb8009;
+  --warn-color-low:    #9e6a03;
+  --on-warn-color:     #0d1117;
+
+  color-scheme: dark;
 }
 
-/* ── Base ─────────────────────────────────────────────────── */
-*, *::before, *::after { box-sizing: border-box; }
+/* ── Body: exact palette text colour ─────────────────────────── */
+/*
+   The computed --text-color-high lands at ~75% lightness.
+   Override body directly so prose text matches our palette.
+*/
+body { color: #e6edf3; }
 
-html, body {
-  background-color: var(--bg);
-  color: var(--text);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
-  font-size: 14px;
-  line-height: 1.5;
+/* ── Header: override the hardcoded gradient ─────────────────── */
+/*
+   LuCI's header has background:linear-gradient(#333,#222) baked in.
+   This cannot be reached via the variable system.
+*/
+header {
+  background: linear-gradient(#161b22, #0d1117) !important;
+  border-bottom: 1px solid #30363d;
 }
+header a        { color: #e6edf3; }
+header .brand   { color: #fff; }
 
-a             { color: var(--blue); text-decoration: none; }
-a:hover       { color: var(--blue); text-decoration: underline; }
-a:visited     { color: var(--purple); }
+/* ── Spinner: needs explicit white on dark background ─────────── */
+/*
+   The default .spinning::before uses background:#000 (light-mode).
+   LuCI only switches to #fff when data-darkmode="true".
+*/
+.spinning::before { background: var(--on-color, #e6edf3); }
 
-hr { border-color: var(--border); }
-
-/* ── Top navigation bar ───────────────────────────────────── */
-.navbar {
-  background-color: var(--surface);
-  border-bottom: 1px solid var(--border);
-  border-radius: 0;
-  min-height: 48px;
-  box-shadow: none;
-}
-
-.navbar-header .navbar-brand {
-  color: var(--text) !important;
-  font-weight: 700;
-  font-size: 15px;
-  padding: 14px 16px;
-}
-.navbar-brand:hover { color: var(--blue) !important; }
-
-.navbar-default .navbar-nav > li > a {
-  color: var(--muted);
-  padding: 14px 16px;
-}
-.navbar-default .navbar-nav > li > a:hover,
-.navbar-default .navbar-nav > li > a:focus {
-  color: var(--text);
-  background-color: var(--surface2);
-}
-.navbar-default .navbar-nav > .active > a,
-.navbar-default .navbar-nav > .active > a:hover {
-  color: var(--text);
-  background-color: var(--surface2);
+/* ── Statistics graphs: invert RRD images for dark bg ─────────── */
+[data-page="admin-statistics-graphs"] [data-plugin] img {
+  filter: invert(100%) hue-rotate(150deg);
 }
 
-.navbar-default .navbar-toggle {
-  border-color: var(--border);
-}
-.navbar-default .navbar-toggle .icon-bar { background-color: var(--muted); }
-.navbar-default .navbar-toggle:hover     { background-color: var(--surface2); }
-
-/* ── Sidebar / main menu ──────────────────────────────────── */
-#mainmenu {
-  background-color: var(--surface);
-  border-right: 1px solid var(--border);
-  min-height: 100vh;
-}
-
-#mainmenu .nav > li > a {
-  color: var(--muted);
-  padding: 9px 16px;
-  font-size: 13px;
-  border-radius: 0;
-}
-#mainmenu .nav > li > a:hover {
-  color: var(--text);
-  background-color: var(--surface2);
-}
-#mainmenu .nav > li.active > a,
-#mainmenu .nav > li.active > a:hover {
-  color: var(--text);
-  background-color: var(--surface2);
-  border-left: 3px solid var(--blue);
-  padding-left: 13px;
-}
-
-#mainmenu .nav-header {
-  color: var(--muted);
-  font-size: 10px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: .06em;
-  padding: 12px 16px 4px;
-}
-
-/* Submenu */
-#mainmenu .nav .nav {
-  background-color: var(--bg);
-}
-#mainmenu .nav .nav > li > a {
-  padding-left: 28px;
-  font-size: 12px;
-}
-
-/* ── Main content area ────────────────────────────────────── */
-#maincontent, .container-fluid {
-  background-color: var(--bg);
-  color: var(--text);
-}
-
-.content-wrapper { padding: 20px; }
-
-/* ── Panels (cards) ───────────────────────────────────────── */
-.panel {
-  background-color: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  box-shadow: none;
-}
-.panel-heading {
-  background-color: var(--surface2);
-  border-bottom: 1px solid var(--border);
-  border-radius: 8px 8px 0 0;
-  color: var(--text);
-  font-weight: 600;
-  padding: 10px 16px;
-}
-.panel-body   { padding: 16px; }
-.panel-footer {
-  background-color: var(--surface2);
-  border-top: 1px solid var(--border);
-  border-radius: 0 0 8px 8px;
-}
-
-.panel-default > .panel-heading          { background-color: var(--surface2); border-color: var(--border); }
-.panel-primary > .panel-heading          { background-color: #1f3a5f; border-color: #2d5a8e; }
-.panel-success > .panel-heading          { background-color: #1a3a1a; border-color: #2d5a2d; }
-.panel-warning > .panel-heading          { background-color: #3a2d0a; border-color: #6b5200; }
-.panel-danger  > .panel-heading          { background-color: #3a1a1a; border-color: #6b2d2d; }
-.panel-info    > .panel-heading          { background-color: #1a2d3a; border-color: #2d5a6b; }
-
-/* ── Tables ───────────────────────────────────────────────── */
-.table {
-  color: var(--text);
-}
-.table > thead > tr > th {
-  border-bottom: 2px solid var(--border);
-  color: var(--muted);
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: .05em;
-  padding: 8px 12px;
-}
-.table > tbody > tr > td,
-.table > tfoot > tr > td {
-  border-top: 1px solid var(--border);
-  padding: 8px 12px;
-}
-.table > tbody > tr:hover > td      { background-color: rgba(255,255,255,.03); }
-.table-striped > tbody > tr:nth-of-type(odd) > td { background-color: rgba(255,255,255,.02); }
-.table-bordered,
-.table-bordered > thead > tr > th,
-.table-bordered > tbody > tr > td  { border-color: var(--border); }
-
-/* ── Forms ────────────────────────────────────────────────── */
-.form-control {
-  background-color: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  color: var(--text);
-  box-shadow: none;
-  transition: border-color .15s, box-shadow .15s;
-}
-.form-control:focus {
-  background-color: var(--bg);
-  border-color: var(--blue);
-  color: var(--text);
-  box-shadow: 0 0 0 3px rgba(88,166,255,.15);
-  outline: none;
-}
-.form-control::placeholder { color: var(--muted); }
-.form-control[disabled],
-.form-control[readonly]    { background-color: var(--surface2); color: var(--muted); }
-
-select.form-control > option { background-color: var(--surface); }
-
-.input-group-addon {
-  background-color: var(--surface2);
-  border-color: var(--border);
-  color: var(--muted);
-}
-
-label { color: var(--text); font-weight: 500; }
-.help-block { color: var(--muted); }
-
-/* ── Buttons ──────────────────────────────────────────────── */
-.btn {
-  border-radius: 6px;
-  font-size: 13px;
-  padding: 5px 14px;
-  font-weight: 500;
-  transition: background-color .15s, border-color .15s;
-}
-
-.btn-default {
-  background-color: var(--surface2);
-  border-color: var(--border);
-  color: var(--text);
-}
-.btn-default:hover, .btn-default:focus {
-  background-color: var(--border);
-  border-color: #484f58;
-  color: var(--text);
-}
-
-.btn-primary {
-  background-color: #1f6feb;
-  border-color: #1f6feb;
-  color: #fff;
-}
-.btn-primary:hover { background-color: #388bfd; border-color: #388bfd; color: #fff; }
-
-.btn-success {
-  background-color: #238636;
-  border-color: #238636;
-  color: #fff;
-}
-.btn-success:hover { background-color: #2ea043; border-color: #2ea043; color: #fff; }
-
-.btn-warning {
-  background-color: #9e6a03;
-  border-color: #9e6a03;
-  color: #fff;
-}
-.btn-warning:hover { background-color: #d29922; border-color: #d29922; color: #fff; }
-
-.btn-danger {
-  background-color: #b62324;
-  border-color: #b62324;
-  color: #fff;
-}
-.btn-danger:hover { background-color: #f85149; border-color: #f85149; color: #fff; }
-
-/* ── Alerts ───────────────────────────────────────────────── */
-.alert {
-  border-radius: 6px;
-  border-width: 1px;
-  font-size: 13px;
-}
-.alert-success { background-color: #0f2d14; border-color: #238636; color: var(--green); }
-.alert-warning { background-color: #2d1e00; border-color: #9e6a03; color: var(--yellow); }
-.alert-danger  { background-color: #2d0f0f; border-color: #b62324; color: var(--red); }
-.alert-info    { background-color: #0f1f2d; border-color: #1f6feb; color: var(--blue); }
-
-/* ── Labels / Badges ──────────────────────────────────────── */
-.label-default { background-color: var(--surface2); color: var(--muted); }
-.label-primary { background-color: #1f6feb; }
-.label-success { background-color: #238636; }
-.label-warning { background-color: #9e6a03; }
-.label-danger  { background-color: #b62324; }
-.label-info    { background-color: #1f6feb; }
-
-.badge { background-color: var(--surface2); color: var(--muted); }
-
-/* ── Text helpers ─────────────────────────────────────────── */
-.text-muted   { color: var(--muted) !important; }
-.text-success { color: var(--green)  !important; }
-.text-warning { color: var(--yellow) !important; }
-.text-danger  { color: var(--red)    !important; }
-.text-info    { color: var(--blue)   !important; }
-.text-primary { color: var(--blue)   !important; }
-
-/* ── Tabs ─────────────────────────────────────────────────── */
-.nav-tabs {
-  border-bottom: 1px solid var(--border);
-}
-.nav-tabs > li > a {
-  color: var(--muted);
-  border: 1px solid transparent;
-  border-radius: 6px 6px 0 0;
-  padding: 7px 14px;
-  font-size: 13px;
-}
-.nav-tabs > li > a:hover {
-  color: var(--text);
-  background-color: var(--surface2);
-  border-color: var(--border) var(--border) transparent;
-}
-.nav-tabs > li.active > a,
-.nav-tabs > li.active > a:hover {
-  color: var(--text);
-  background-color: var(--surface);
-  border-color: var(--border) var(--border) var(--surface);
-}
-
-/* ── Dropdowns ────────────────────────────────────────────── */
-.dropdown-menu {
-  background-color: var(--surface2);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  box-shadow: 0 8px 24px rgba(0,0,0,.4);
-}
-.dropdown-menu > li > a {
-  color: var(--text);
-  font-size: 13px;
-  padding: 6px 14px;
-}
-.dropdown-menu > li > a:hover {
-  background-color: var(--border);
-  color: var(--text);
-}
-.dropdown-divider,
-.dropdown-menu .divider { background-color: var(--border); }
-
-/* ── Breadcrumb ───────────────────────────────────────────── */
-.breadcrumb {
-  background-color: transparent;
-  border-bottom: 1px solid var(--border);
-  border-radius: 0;
-  padding: 10px 0;
-  margin-bottom: 16px;
-  font-size: 12px;
-}
-.breadcrumb > li + li::before { color: var(--muted); }
-.breadcrumb > .active { color: var(--muted); }
-
-/* ── Pagination ───────────────────────────────────────────── */
-.pagination > li > a,
-.pagination > li > span {
-  background-color: var(--surface);
-  border-color: var(--border);
-  color: var(--blue);
-}
-.pagination > li > a:hover {
-  background-color: var(--surface2);
-  border-color: var(--border);
-  color: var(--blue);
-}
-.pagination > .active > a,
-.pagination > .active > a:hover {
-  background-color: #1f6feb;
-  border-color: #1f6feb;
-  color: #fff;
-}
-.pagination > .disabled > a { background-color: var(--surface); border-color: var(--border); color: var(--muted); }
-
-/* ── Progress bars ────────────────────────────────────────── */
-.progress {
-  background-color: var(--surface2);
-  border-radius: 4px;
-  height: 8px;
-  box-shadow: none;
-}
-.progress-bar         { background-color: var(--blue); }
-.progress-bar-success { background-color: var(--green); }
-.progress-bar-warning { background-color: var(--yellow); }
-.progress-bar-danger  { background-color: var(--red); }
-
-/* ── Modal ────────────────────────────────────────────────── */
-.modal-content {
-  background-color: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  box-shadow: 0 16px 48px rgba(0,0,0,.5);
-}
-.modal-header {
-  border-bottom: 1px solid var(--border);
-  padding: 14px 16px;
-}
-.modal-header .close { color: var(--muted); opacity: 1; text-shadow: none; }
-.modal-header .close:hover { color: var(--text); }
-.modal-footer {
-  border-top: 1px solid var(--border);
-  padding: 12px 16px;
-}
-.modal-backdrop { background-color: #000; }
-.modal-backdrop.in { opacity: .6; }
-
-/* ── Scrollbars (WebKit) ──────────────────────────────────── */
-::-webkit-scrollbar       { width: 8px; height: 8px; }
-::-webkit-scrollbar-track { background: var(--bg); }
-::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+/* ── Scrollbars (WebKit / Blink) ─────────────────────────────── */
+::-webkit-scrollbar            { width: 8px; height: 8px; }
+::-webkit-scrollbar-track      { background: #0d1117; }
+::-webkit-scrollbar-thumb      { background: #30363d; border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: #484f58; }
-
-/* ── LuCI-specific overrides ──────────────────────────────── */
-
-/* Status page LEDs */
-.led-green  { color: var(--green)  !important; }
-.led-red    { color: var(--red)    !important; }
-.led-yellow { color: var(--yellow) !important; }
-
-/* Config sections */
-.cbi-section {
-  background-color: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  margin-bottom: 16px;
-  overflow: hidden;
-}
-.cbi-section-node {
-  padding: 16px;
-}
-.cbi-section-descr {
-  color: var(--muted);
-  font-size: 12px;
-  padding: 0 16px 12px;
-}
-
-/* Config option rows */
-.cbi-value { padding: 8px 0; border-bottom: 1px solid var(--border); }
-.cbi-value:last-child { border-bottom: none; }
-.cbi-value-title { color: var(--muted); font-size: 12px; }
-
-/* Map title */
-.cbi-map-title {
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--text);
-  margin-bottom: 4px;
-}
-.cbi-map-descr { color: var(--muted); font-size: 13px; margin-bottom: 16px; }
-
-/* Tabmenu */
-.cbi-tabmenu { border-bottom: 1px solid var(--border); margin-bottom: 16px; }
-.cbi-tabmenu li a { color: var(--muted); padding: 7px 14px; display: inline-block; font-size: 13px; }
-.cbi-tabmenu li a:hover { color: var(--text); }
-.cbi-tabmenu li.cbi-tab a { color: var(--text); border-bottom: 2px solid var(--blue); font-weight: 600; }
-
-/* Save/Apply buttons row */
-.cbi-page-actions {
-  border-top: 1px solid var(--border);
-  padding: 14px 0;
-  margin-top: 16px;
-  display: flex;
-  gap: 8px;
-}
-
-/* Footer */
-#footer {
-  background-color: var(--surface);
-  border-top: 1px solid var(--border);
-  color: var(--muted);
-  font-size: 11px;
-  padding: 10px 20px;
-  text-align: right;
-}
-
-/* Loading spinner */
-.spinning { color: var(--blue); }

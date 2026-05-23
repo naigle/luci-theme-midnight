@@ -24,38 +24,39 @@ echo "  Target : $TARGET"
 echo "  SSH key: ${KEY} $([ -f "$KEY" ] && echo '(found)' || echo '(not found, will use password)')"
 echo ""
 
-send_file() {
-    local src="$1" dst="$2"
-    if [ -f "$src" ]; then
-        $SSH "$TARGET" "cat > $dst" < "$src"
-    else
-        local varname="$3"
-        echo "${!varname}" | base64 -d | $SSH "$TARGET" "cat > $dst"
-    fi
-}
+# ── Install stylesheet ──────────────────────────────────────────
+$SSH "$TARGET" "mkdir -p /www/luci-static/midnight"
 
-$SSH "$TARGET" "mkdir -p /www/luci-static/midnight /usr/lib/lua/luci/view/themes/midnight"
-
-send_file "$REPO_DIR/src/luci-static/midnight/cascade.css" \
-          "/www/luci-static/midnight/cascade.css" "CSS_B64"
+if [ -f "$REPO_DIR/src/luci-static/midnight/cascade.css" ]; then
+    $SSH "$TARGET" "cat > /www/luci-static/midnight/cascade.css" \
+        < "$REPO_DIR/src/luci-static/midnight/cascade.css"
+else
+    echo "$CSS_B64" | base64 -d \
+        | $SSH "$TARGET" "cat > /www/luci-static/midnight/cascade.css"
+fi
 echo "  ✓ Stylesheet installed"
 
-send_file "$REPO_DIR/src/view/themes/midnight/header.htm" \
-          "/usr/lib/lua/luci/view/themes/midnight/header.htm" "HEADER_B64"
-echo "  ✓ Header template installed"
+# ── Register theme in LuCI config and set as default ───────────
+$SSH "$TARGET" "
+    # Ensure the themes section exists
+    uci -q get luci.themes > /dev/null 2>&1 || uci -q set luci.themes=internal
+    # Register the midnight theme
+    uci -q set luci.themes.Midnight='/luci-static/midnight'
+    # Set as the active theme
+    uci -q set luci.main.mediaurlbase='/luci-static/midnight'
+    uci -q commit luci
+"
+echo "  ✓ LuCI theme registered and set to midnight"
 
-send_file "$REPO_DIR/src/view/themes/midnight/footer.htm" \
-          "/usr/lib/lua/luci/view/themes/midnight/footer.htm" "FOOTER_B64"
-echo "  ✓ Footer template installed"
-
-$SSH "$TARGET" "uci -q set luci.main.mediaurlbase=/luci-static/midnight && uci -q commit luci"
-echo "  ✓ LuCI theme set to midnight"
+# ── Reload web server ──────────────────────────────────────────
+$SSH "$TARGET" "/etc/init.d/uhttpd reload 2>/dev/null || true"
+echo "  ✓ uhttpd reloaded"
 
 echo ""
-echo "Done. Reload LuCI — http://${TARGET##*@}/"
-echo "To revert: uci set luci.main.mediaurlbase=/luci-static/bootstrap && uci commit luci"
+echo "Done. Open LuCI — http://${TARGET##*@}/"
+echo ""
+echo "To revert to the default theme:"
+echo "  uci set luci.main.mediaurlbase=/luci-static/bootstrap && uci commit luci"
 
 # Embedded file content (populated by CI — do not edit below this line)
 CSS_B64=""
-HEADER_B64=""
-FOOTER_B64=""

@@ -20,9 +20,10 @@ define Package/luci-theme-midnight
 endef
 
 define Package/luci-theme-midnight/description
-  A dark theme for LuCI inspired by GitHub's dark mode.
-  Uses a deep navy/charcoal palette with green/amber/red
-  health indicators — consistent with the Wi-Fi Health Dashboard.
+  A permanent dark theme for LuCI inspired by GitHub's dark mode.
+  Uses a deep navy/charcoal palette with green/amber/red status
+  indicators — consistent with the Wi-Fi Health Dashboard.
+  CSS custom property overrides only; no Lua templates required.
 endef
 
 define Build/Compile
@@ -32,16 +33,12 @@ define Package/luci-theme-midnight/install
 	$(INSTALL_DIR) $(1)/www/luci-static/midnight
 	$(INSTALL_DATA) ./src/luci-static/midnight/cascade.css \
 	                $(1)/www/luci-static/midnight/cascade.css
-
-	$(INSTALL_DIR) $(1)/usr/lib/lua/luci/view/themes/midnight
-	$(INSTALL_DATA) ./src/view/themes/midnight/header.htm \
-	                $(1)/usr/lib/lua/luci/view/themes/midnight/header.htm
-	$(INSTALL_DATA) ./src/view/themes/midnight/footer.htm \
-	                $(1)/usr/lib/lua/luci/view/themes/midnight/footer.htm
 endef
 
 define Package/luci-theme-midnight/postinst
 #!/bin/sh
+uci -q get luci.themes > /dev/null 2>&1 || uci -q set luci.themes=internal
+uci -q set luci.themes.Midnight='/luci-static/midnight'
 uci -q set luci.main.mediaurlbase=/luci-static/midnight
 uci -q commit luci
 exit 0
@@ -49,7 +46,7 @@ endef
 
 define Package/luci-theme-midnight/prerm
 #!/bin/sh
-# Restore bootstrap theme on removal
+uci -q del luci.themes.Midnight 2>/dev/null || true
 uci -q set luci.main.mediaurlbase=/luci-static/bootstrap
 uci -q commit luci
 exit 0

@@ -18,14 +18,9 @@ jobs:
           PKG="luci-theme-midnight_${VERSION}-r0_all"
 
           mkdir -p staging/www/luci-static/midnight
-          mkdir -p staging/usr/lib/lua/luci/view/themes/midnight
 
           install -m 644 src/luci-static/midnight/cascade.css \
                          staging/www/luci-static/midnight/cascade.css
-          install -m 644 src/view/themes/midnight/header.htm \
-                         staging/usr/lib/lua/luci/view/themes/midnight/header.htm
-          install -m 644 src/view/themes/midnight/footer.htm \
-                         staging/usr/lib/lua/luci/view/themes/midnight/footer.htm
 
           INSTALLED_SIZE=$(du -sb staging | awk '{print $1}')
           BUILDDATE=$(date +%s)
@@ -44,12 +39,15 @@ jobs:
 
           cat > staging/.post-install << 'SCRIPT'
           #!/bin/sh
+          uci -q get luci.themes > /dev/null 2>&1 || uci -q set luci.themes=internal
+          uci -q set luci.themes.Midnight='/luci-static/midnight'
           uci -q set luci.main.mediaurlbase=/luci-static/midnight
           uci -q commit luci
           SCRIPT
 
           cat > staging/.pre-deinstall << 'SCRIPT'
           #!/bin/sh
+          uci -q del luci.themes.Midnight 2>/dev/null || true
           uci -q set luci.main.mediaurlbase=/luci-static/bootstrap
           uci -q commit luci
           SCRIPT
@@ -60,21 +58,19 @@ jobs:
             --owner=0 --group=0 \
             -C staging \
             .PKGINFO .post-install .pre-deinstall \
-            ./www ./usr
+            ./www
 
           echo "APK_FILE=${PKG}.apk" >> $GITHUB_ENV
           echo "VERSION=${VERSION}"  >> $GITHUB_ENV
 
-      - name: Regenerate install.sh with embedded files
+      - name: Embed CSS in install.sh
         run: |
           CSS_B64=$(base64 -w0 src/luci-static/midnight/cascade.css)
-          HEADER_B64=$(base64 -w0 src/view/themes/midnight/header.htm)
-          FOOTER_B64=$(base64 -w0 src/view/themes/midnight/footer.htm)
 
-          head -n $(grep -n '^CSS_B64=' install.sh | cut -d: -f1 | head -1) install.sh | head -n -1 > install.sh.new || cp install.sh install.sh.new
-          printf 'CSS_B64="%s"\n'    "$CSS_B64"    >> install.sh.new
-          printf 'HEADER_B64="%s"\n' "$HEADER_B64" >> install.sh.new
-          printf 'FOOTER_B64="%s"\n' "$FOOTER_B64" >> install.sh.new
+          # Replace the CSS_B64= line (and everything after) with fresh content
+          head -n $(grep -n '^CSS_B64=' install.sh | cut -d: -f1 | head -1) install.sh \
+            | head -n -1 > install.sh.new || cp install.sh install.sh.new
+          printf 'CSS_B64="%s"\n' "$CSS_B64" >> install.sh.new
           mv install.sh.new install.sh
           chmod +x install.sh
 
