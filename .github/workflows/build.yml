@@ -18,9 +18,13 @@ jobs:
           PKG="luci-theme-midnight_${VERSION}-r0_all"
 
           mkdir -p staging/www/luci-static/midnight
+          mkdir -p staging/usr/share/ucode/luci/template/themes
 
           install -m 644 src/luci-static/midnight/cascade.css \
                          staging/www/luci-static/midnight/cascade.css
+
+          # Symlink: midnight ucode templates reuse bootstrap
+          ln -s bootstrap staging/usr/share/ucode/luci/template/themes/midnight
 
           INSTALLED_SIZE=$(du -sb staging | awk '{print $1}')
           BUILDDATE=$(date +%s)
@@ -50,6 +54,7 @@ jobs:
           uci -q del luci.themes.Midnight 2>/dev/null || true
           uci -q set luci.main.mediaurlbase=/luci-static/bootstrap
           uci -q commit luci
+          rm -f /usr/share/ucode/luci/template/themes/midnight
           SCRIPT
 
           chmod 755 staging/.post-install staging/.pre-deinstall
@@ -58,7 +63,7 @@ jobs:
             --owner=0 --group=0 \
             -C staging \
             .PKGINFO .post-install .pre-deinstall \
-            ./www
+            ./www ./usr
 
           echo "APK_FILE=${PKG}.apk" >> $GITHUB_ENV
           echo "VERSION=${VERSION}"  >> $GITHUB_ENV

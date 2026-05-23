@@ -25,7 +25,7 @@ echo "  SSH key: ${KEY} $([ -f "$KEY" ] && echo '(found)' || echo '(not found, w
 echo ""
 
 # ── Install stylesheet ──────────────────────────────────────────
-$SSH "$TARGET" "mkdir -p /www/luci-static/midnight"
+$SSH "$TARGET" "mkdir -p /www/luci-static/midnight /usr/share/ucode/luci/template/themes"
 
 if [ -f "$REPO_DIR/src/luci-static/midnight/cascade.css" ]; then
     $SSH "$TARGET" "cat > /www/luci-static/midnight/cascade.css" \
@@ -35,6 +35,12 @@ else
         | $SSH "$TARGET" "cat > /www/luci-static/midnight/cascade.css"
 fi
 echo "  ✓ Stylesheet installed"
+
+# ── Symlink ucode templates (midnight → bootstrap) ─────────────
+# The ucode LuCI requires a template directory per theme. We reuse
+# the bootstrap templates; our cascade.css handles the dark appearance.
+$SSH "$TARGET" "ln -sf bootstrap /usr/share/ucode/luci/template/themes/midnight"
+echo "  ✓ ucode template symlink created"
 
 # ── Register theme in LuCI config and set as default ───────────
 $SSH "$TARGET" "

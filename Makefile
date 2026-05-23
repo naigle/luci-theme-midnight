@@ -33,6 +33,8 @@ define Package/luci-theme-midnight/install
 	$(INSTALL_DIR) $(1)/www/luci-static/midnight
 	$(INSTALL_DATA) ./src/luci-static/midnight/cascade.css \
 	                $(1)/www/luci-static/midnight/cascade.css
+	$(INSTALL_DIR) $(1)/usr/share/ucode/luci/template/themes
+	$(LN) bootstrap $(1)/usr/share/ucode/luci/template/themes/midnight
 endef
 
 define Package/luci-theme-midnight/postinst
@@ -49,6 +51,7 @@ define Package/luci-theme-midnight/prerm
 uci -q del luci.themes.Midnight 2>/dev/null || true
 uci -q set luci.main.mediaurlbase=/luci-static/bootstrap
 uci -q commit luci
+rm -f /usr/share/ucode/luci/template/themes/midnight
 exit 0
 endef
 
