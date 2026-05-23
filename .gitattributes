@@ -1,0 +1,6 @@
+* text=auto
+src/luci-static/midnight/cascade.css    text eol=lf
+src/view/themes/midnight/header.htm     text eol=lf
+src/view/themes/midnight/footer.htm     text eol=lf
+install.sh                              text eol=lf
+Makefile                                text eol=lf
