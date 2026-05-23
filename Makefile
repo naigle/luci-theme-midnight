@@ -33,6 +33,8 @@ define Package/luci-theme-midnight/install
 	$(INSTALL_DIR) $(1)/www/luci-static/midnight
 	$(INSTALL_DATA) ./src/luci-static/midnight/cascade.css \
 	                $(1)/www/luci-static/midnight/cascade.css
+	$(INSTALL_DATA) ./src/luci-static/midnight/mobile.css \
+	                $(1)/www/luci-static/midnight/mobile.css
 	$(INSTALL_DIR) $(1)/usr/share/ucode/luci/template/themes
 	$(LN) bootstrap $(1)/usr/share/ucode/luci/template/themes/midnight
 endef

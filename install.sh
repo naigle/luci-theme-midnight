@@ -34,7 +34,16 @@ else
     echo "$CSS_B64" | base64 -d \
         | $SSH "$TARGET" "cat > /www/luci-static/midnight/cascade.css"
 fi
-echo "  ✓ Stylesheet installed"
+echo "  ✓ cascade.css installed"
+
+if [ -f "$REPO_DIR/src/luci-static/midnight/mobile.css" ]; then
+    $SSH "$TARGET" "cat > /www/luci-static/midnight/mobile.css" \
+        < "$REPO_DIR/src/luci-static/midnight/mobile.css"
+else
+    echo "$MOBILE_B64" | base64 -d \
+        | $SSH "$TARGET" "cat > /www/luci-static/midnight/mobile.css"
+fi
+echo "  ✓ mobile.css installed"
 
 # ── Symlink ucode templates (midnight → bootstrap) ─────────────
 # The ucode LuCI requires a template directory per theme. We reuse
@@ -66,3 +75,4 @@ echo "  uci set luci.main.mediaurlbase=/luci-static/bootstrap && uci commit luci
 
 # Embedded file content (populated by CI — do not edit below this line)
 CSS_B64=""
+MOBILE_B64=""

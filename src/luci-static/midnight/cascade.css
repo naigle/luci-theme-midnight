@@ -1,30 +1,41 @@
 /* =============================================================
    LuCI Theme — Midnight
    Permanent dark theme for OpenWrt's LuCI web interface.
-   Overrides the LuCI CSS custom property system only —
-   no Lua templates required or used.
+
+   Strategy: import the full bootstrap base stylesheet, then
+   override LuCI's CSS custom properties for a permanent dark
+   appearance. No Lua templates required.
    ============================================================= */
+
+/* ── Pull in all base layout / component styles ──────────────── */
+@import url('/luci-static/bootstrap/cascade.css');
 
 /* ── Force permanent dark mode ───────────────────────────────── */
 /*
-   LuCI builds all colours from a small set of HSL root variables.
-   Overriding them here themes the entire interface without
-   touching a single component selector.
+   The header template sets data-darkmode from the OS preference
+   when the theme name is not "bootstrap-dark" or "bootstrap-light".
+   Bootstrap's [data-darkmode="true"] selector (specificity 0-0-1)
+   would override a plain :root rule (0-0-0).
+
+   Using ":root, :root[data-darkmode]" gives us a matching 0-0-1
+   rule that comes AFTER the @import, so cascade order makes ours
+   win regardless of what data-darkmode is set to.
 */
-:root {
+:root,
+:root[data-darkmode] {
   /* Background: deep navy-charcoal */
-  --background-color-delta-l-sign: 1;   /* sign=1 → elevated surfaces get lighter */
+  --background-color-delta-l-sign: 1;   /* elevated surfaces get lighter */
   --background-color-h: 216;
   --background-color-s: 14%;
   --background-color-l: 7%;             /* hsl(216,14%,7%) ≈ #0d1117 */
 
-  /* Text: off-white, dims via delta as it steps to medium/low */
+  /* Text: off-white */
   --text-color-delta-l-sign: -1;
   --text-color-h:   0;
   --text-color-s:   0%;
   --text-color-l:   100%;
 
-  /* Borders: same hue as background, elevated (+20 / +13 / +6 %) */
+  /* Borders: in-hue, elevated above background */
   --border-color-delta-l-sign: 1;
 
   /* Primary accent: GitHub blue */
@@ -56,33 +67,33 @@
   color-scheme: dark;
 }
 
-/* ── Body: exact palette text colour ─────────────────────────── */
+/* ── Body: use our specific text colour ─────────────────────── */
 /*
-   The computed --text-color-high lands at ~75% lightness.
-   Override body directly so prose text matches our palette.
+   --text-color-high computes to ~75% lightness; nudge body text
+   to our exact palette value.
 */
 body { color: #e6edf3; }
 
 /* ── Header: override the hardcoded gradient ─────────────────── */
 /*
-   LuCI's header has background:linear-gradient(#333,#222) baked in.
-   This cannot be reached via the variable system.
+   bootstrap/cascade.css has background:linear-gradient(#333,#222)
+   baked into the header rule — unreachable via the variable system.
 */
 header {
   background: linear-gradient(#161b22, #0d1117) !important;
   border-bottom: 1px solid #30363d;
 }
-header a        { color: #e6edf3; }
-header .brand   { color: #fff; }
+header a      { color: #e6edf3; }
+header .brand { color: #fff; }
 
-/* ── Spinner: needs explicit white on dark background ─────────── */
+/* ── Spinner: white on dark background ──────────────────────── */
 /*
-   The default .spinning::before uses background:#000 (light-mode).
-   LuCI only switches to #fff when data-darkmode="true".
+   Default .spinning::before uses background:#000 (light-mode path).
+   LuCI only sets #fff when data-darkmode="true" via a separate rule.
 */
 .spinning::before { background: var(--on-color, #e6edf3); }
 
-/* ── Statistics graphs: invert RRD images for dark bg ─────────── */
+/* ── Statistics graphs: invert RRD images ────────────────────── */
 [data-page="admin-statistics-graphs"] [data-plugin] img {
   filter: invert(100%) hue-rotate(150deg);
 }

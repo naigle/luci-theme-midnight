@@ -22,6 +22,8 @@ jobs:
 
           install -m 644 src/luci-static/midnight/cascade.css \
                          staging/www/luci-static/midnight/cascade.css
+          install -m 644 src/luci-static/midnight/mobile.css \
+                         staging/www/luci-static/midnight/mobile.css
 
           # Symlink: midnight ucode templates reuse bootstrap
           ln -s bootstrap staging/usr/share/ucode/luci/template/themes/midnight
@@ -68,14 +70,16 @@ jobs:
           echo "APK_FILE=${PKG}.apk" >> $GITHUB_ENV
           echo "VERSION=${VERSION}"  >> $GITHUB_ENV
 
-      - name: Embed CSS in install.sh
+      - name: Embed files in install.sh
         run: |
           CSS_B64=$(base64 -w0 src/luci-static/midnight/cascade.css)
+          MOBILE_B64=$(base64 -w0 src/luci-static/midnight/mobile.css)
 
-          # Replace the CSS_B64= line (and everything after) with fresh content
+          # Replace everything from CSS_B64= onward with fresh embedded content
           head -n $(grep -n '^CSS_B64=' install.sh | cut -d: -f1 | head -1) install.sh \
             | head -n -1 > install.sh.new || cp install.sh install.sh.new
-          printf 'CSS_B64="%s"\n' "$CSS_B64" >> install.sh.new
+          printf 'CSS_B64="%s"\n'    "$CSS_B64"    >> install.sh.new
+          printf 'MOBILE_B64="%s"\n' "$MOBILE_B64" >> install.sh.new
           mv install.sh.new install.sh
           chmod +x install.sh
 
